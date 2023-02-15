@@ -34,10 +34,10 @@ export const getPostsBySearchAndTags = (searchQuery) => async (dispatch) => {
     }
 }
 
-export const createPost = (post, history) => async (dispatch) => {
+export const createPost = (post, navigate) => async (dispatch) => {
     try {
         const { data } = await api.createPost(post);
-        history.push(`/posts/${data._id}`)
+        navigate(`/posts/${data._id}`)
         dispatch({ type: CREATE, payload: data });
     } catch (error) {
         console.log(error.message);
