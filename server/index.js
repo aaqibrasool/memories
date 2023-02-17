@@ -22,8 +22,6 @@ const PORT = process.env.PORT || 5000
 app.get('/', (req, res) => {
     res.send('APP IS RUNNING')
 })
-mongoose.connect(process.env.DB_URL,
-    { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.DB_URL)
     .then(() => app.listen(PORT, () => console.log(`server running at ${PORT}`)))
     .catch((err) => console.log(err))
-mongoose.set('useFindAndModify', false)
