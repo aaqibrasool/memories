@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react"
-import useStyles from "./styles"
+import { useNavigate } from "react-router-dom"
+import { useDispatch, useSelector } from "react-redux"
+import FileBase from "react-file-base64"
+
 import {
   TextField,
   Button,
@@ -11,10 +14,10 @@ import {
 } from "@mui/material"
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank"
 import CheckBoxIcon from "@mui/icons-material/CheckBox"
-import FileBase from "react-file-base64"
-import { useDispatch, useSelector } from "react-redux"
+
 import { createPost, updatePost } from "../../redux/actions/posts"
-import { useNavigate } from "react-router-dom"
+
+import useStyles from "./styles"
 
 const someTags = [
   "Film",
@@ -115,7 +118,7 @@ const Form = ({ currentId, setCurrentId }) => {
           multiple
           id="tags-filled"
           options={someTags}
-          getOptionLabel={(option) => option.title}
+          getOptionLabel={(option) => option}
           renderOption={(props, option, { selected }) => (
             <li {...props}>
               <Checkbox
@@ -131,6 +134,7 @@ const Form = ({ currentId, setCurrentId }) => {
           renderTags={(value, getTagProps) =>
             value.map((option, index) => (
               <Chip
+                key={index}
                 variant="outlined"
                 label={option}
                 {...getTagProps({ index })}
