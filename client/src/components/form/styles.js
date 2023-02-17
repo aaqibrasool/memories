@@ -21,4 +21,11 @@ export default makeStyles((theme) => ({
     buttonSubmit: {
         marginBottom: 10,
     },
+    tagsInput:{
+
+      "& .MuiAutocomplete-inputRoot":{
+        marginTop:theme.spacing(1),
+        paddingBottom:theme.spacing(2)
+      }  
+    }
 }));

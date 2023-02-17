@@ -1,17 +1,42 @@
 import { useEffect, useState } from "react"
 import useStyles from "./styles"
-import { TextField, Button, Typography, Paper } from "@mui/material"
+import {
+  TextField,
+  Button,
+  Typography,
+  Paper,
+  Autocomplete,
+  Chip,
+  Checkbox,
+} from "@mui/material"
+import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank"
+import CheckBoxIcon from "@mui/icons-material/CheckBox"
 import FileBase from "react-file-base64"
 import { useDispatch, useSelector } from "react-redux"
 import { createPost, updatePost } from "../../redux/actions/posts"
 import { useNavigate } from "react-router-dom"
+
+const someTags = [
+  "Film",
+  "Tv-Show",
+  "Vacation",
+  "Tourism",
+  "Travel-Diaries",
+  "Event",
+  "Sports",
+  "Football",
+  "Cricket",
+  "Mma",
+]
+const icon = <CheckBoxOutlineBlankIcon fontSize="small" />
+const checkedIcon = <CheckBoxIcon fontSize="small" />
 
 const Form = ({ currentId, setCurrentId }) => {
   const classes = useStyles()
   const [postData, setPostData] = useState({
     title: "",
     message: "",
-    tags: "",
+    tags: [],
     selectedFile: "",
   })
   const post = useSelector((state) =>
@@ -23,7 +48,7 @@ const Form = ({ currentId, setCurrentId }) => {
 
   const clear = () => {
     setCurrentId(null)
-    setPostData({ title: "", message: "", tags: "", selectedFile: "" })
+    setPostData({ title: "", message: "", tags: [], selectedFile: "" })
   }
 
   const handleSubmit = async (e) => {
@@ -47,6 +72,7 @@ const Form = ({ currentId, setCurrentId }) => {
       </Paper>
     )
   }
+
   return (
     <Paper className={classes.paper} elevation={6}>
       <form
@@ -76,16 +102,51 @@ const Form = ({ currentId, setCurrentId }) => {
             setPostData({ ...postData, message: e.target.value })
           }
         />
-        <TextField
-          name="tags"
-          variant="outlined"
-          label="Tags (coma separated)"
+        <Autocomplete
+          className={classes.tagsInput}
           fullWidth
           value={postData.tags}
-          onChange={(e) =>
-            setPostData({ ...postData, tags: e.target.value.split(",") })
+          onChange={(event, newValue) => {
+            setPostData((prevState) => ({
+              ...prevState,
+              tags: newValue,
+            }))
+          }}
+          multiple
+          id="tags-filled"
+          options={someTags}
+          getOptionLabel={(option) => option.title}
+          renderOption={(props, option, { selected }) => (
+            <li {...props}>
+              <Checkbox
+                icon={icon}
+                checkedIcon={checkedIcon}
+                style={{ marginRight: 8 }}
+                checked={selected}
+              />
+              {option}
+            </li>
+          )}
+          freeSolo
+          renderTags={(value, getTagProps) =>
+            value.map((option, index) => (
+              <Chip
+                variant="outlined"
+                label={option}
+                {...getTagProps({ index })}
+              />
+            ))
           }
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              variant="outlined"
+              label="Tags"
+              placeholder="Search"
+            />
+          )}
         />
+
         <div className={classes.fileInput}>
           <FileBase
             type="file"
