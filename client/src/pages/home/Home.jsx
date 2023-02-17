@@ -1,4 +1,7 @@
 import React, { useState } from "react"
+import { useDispatch } from "react-redux"
+import { useNavigate, useLocation } from "react-router-dom"
+
 import {
   Container,
   Grow,
@@ -8,14 +11,13 @@ import {
   Button,
   Paper,
   Chip,
+  Autocomplete,
 } from "@mui/material"
-import { useDispatch } from "react-redux"
-import { useNavigate, useLocation } from "react-router-dom"
-
-import { getPostsBySearchAndTags } from "../../redux/actions/posts"
 import Posts from "../../components/posts/Posts"
 import Form from "../../components/form/Form"
 import Pagination from "../../components/pagination/Pagination"
+
+import { getPostsBySearchAndTags } from "../../redux/actions/posts"
 
 import useStyles from "./styles"
 
@@ -52,11 +54,6 @@ const Home = () => {
     }
   }
 
-  const handleAddChip = (tag) => setTags([...tags, tag])
-
-  const handleDeleteChip = (chipToDelete) =>
-    setTags(tags.filter((tag) => tag !== chipToDelete))
-
   return (
     <Grow in>
       <Container maxWidth="xl">
@@ -85,13 +82,37 @@ const Home = () => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
-              <Chip
-                style={{ margin: "10px 0" }}
+              <Autocomplete
+                sx={{ margin: "16px 0" }}
+                className={classes.tagsInput}
+                fullWidth
                 value={tags}
-                onAdd={(chip) => handleAddChip(chip)}
-                onDelete={(chip) => handleDeleteChip(chip)}
-                label="Search Tags"
-                variant="outlined"
+                onChange={(event, newValue) => {
+                  setTags(newValue)
+                }}
+                multiple
+                id="tags-filled"
+                options={tags}
+                getOptionLabel={(option) => option}
+                freeSolo
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => (
+                    <Chip
+                      key={index}
+                      variant="outlined"
+                      label={option}
+                      {...getTagProps({ index })}
+                    />
+                  ))
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    variant="outlined"
+                    label="Tags"
+                    placeholder="Search"
+                  />
+                )}
               />
               <Button
                 onClick={searchPost}
