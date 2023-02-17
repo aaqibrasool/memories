@@ -1,4 +1,4 @@
-import { useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import {
   Card,
   CardActions,
@@ -20,7 +20,7 @@ import { useNavigate } from "react-router-dom"
 const Post = ({ post, setCurrentId }) => {
   const classes = useStyles()
   const dispatch = useDispatch()
-  const user = JSON.parse(localStorage.getItem("profile"))
+  const user = useSelector((state) => state.authReducer.authData)
   const navigate = useNavigate()
   const isUserPost = user?.result?._id === post.creator
 
@@ -99,17 +99,20 @@ const Post = ({ post, setCurrentId }) => {
         <Button
           size="small"
           color="primary"
+          disabled={!user?.result}
           onClick={() => dispatch(likePost(post._id))}
         >
-          <ThumbUpAltIcon fontSize="small" /> Like {post.likeCount}{" "}
+          <Likes />
         </Button>
-        <Button
-          size="small"
-          color="primary"
-          onClick={() => dispatch(deletePost(post._id))}
-        >
-          <DeleteIcon fontSize="small" /> Delete
-        </Button>
+        {post.creator === user?.result?._id && (
+          <Button
+            size="small"
+            color="primary"
+            onClick={() => dispatch(deletePost(post._id))}
+          >
+            <DeleteIcon fontSize="small" /> Delete
+          </Button>
+        )}
       </CardActions>
     </Card>
   )
