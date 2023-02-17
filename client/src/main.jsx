@@ -8,6 +8,8 @@ import reducers from "./redux/reducers/index"
 
 import App from "./App"
 
+import "./index.css"
+
 const store = createStore(reducers, compose(applyMiddleware(thunk)))
 const rootElement = document.getElementById("root")
 const root = createRoot(rootElement)
