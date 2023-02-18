@@ -3,6 +3,7 @@ import { makeStyles } from '@mui/styles';
 export default makeStyles({
   media: {
     paddingTop: '56.25%',
+    width:"100%",
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     backgroundBlendMode: 'darken',
   },
