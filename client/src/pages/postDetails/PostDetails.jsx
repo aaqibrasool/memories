@@ -31,7 +31,13 @@ const PostDetails = () => {
     )
   }
 
-  const recommendedPosts = posts.filter(({ _id }) => _id !== post._id)
+  console.log({ loading, post, posts })
+
+  const recommendedPosts = posts.filter(
+    (el) =>
+      el._id !== post._id &&
+      el.tags.find((tag) => post.tags.find((postTag) => postTag === tag))
+  )
 
   return (
     <Paper style={{ padding: "20px", borderRadius: "15px" }} elevation={6}>

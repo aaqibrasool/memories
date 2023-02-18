@@ -37,7 +37,7 @@ const Home = () => {
   const navigate = useNavigate()
 
   const searchPost = () => {
-    if (search.trim() || tags) {
+    if (search.trim() || tags.length) {
       //console.log(`/posts/search?searchQuery=${search || 'none'}&tags=${tags.join(',')}`)
       dispatch(getPostsBySearchAndTags({ search, tags: tags.join(",") }))
       navigate(
@@ -47,6 +47,7 @@ const Home = () => {
       navigate("/")
     }
   }
+  console.log(tags)
 
   const handleKeyPress = (e) => {
     if (e.keyCode === 13) {
@@ -93,7 +94,6 @@ const Home = () => {
                 multiple
                 id="tags-filled"
                 options={tags}
-                getOptionLabel={(option) => option}
                 freeSolo
                 renderTags={(value, getTagProps) =>
                   value.map((option, index) => (
