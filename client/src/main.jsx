@@ -1,27 +1,24 @@
 import React from "react"
-import { createRoot } from "react-dom/client"
+import ReactDom from "react-dom/client"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 import { BrowserRouter } from "react-router-dom"
-import { Provider } from "react-redux"
-import { createStore, applyMiddleware, compose } from "redux"
-import thunk from "redux-thunk"
-import reducers from "./redux/reducers/index"
 
+import AuthProvider from "./context/auth"
 import App from "./App"
 
 import "./index.css"
 
-const store = createStore(reducers, compose(applyMiddleware(thunk)))
-const rootElement = document.getElementById("root")
-const root = createRoot(rootElement)
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { staleTime: 1000 * 60 * 20 } },
+})
 
-function AppCb({ callback }) {
-  return <App />
-}
-
-root.render(
-  <Provider store={store}>
-    <BrowserRouter>
-      <AppCb callback={() => console.log("ren")} />
-    </BrowserRouter>
-  </Provider>
+ReactDom.createRoot(document.getElementById("root")).render(
+  <BrowserRouter>
+    <AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>
+    </AuthProvider>
+  </BrowserRouter>
 )

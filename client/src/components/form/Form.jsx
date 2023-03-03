@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { useDispatch, useSelector } from "react-redux"
 import FileBase from "react-file-base64"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+
+import { useAuth } from "../../context/auth"
 
 import {
   TextField,
@@ -15,7 +17,7 @@ import {
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank"
 import CheckBoxIcon from "@mui/icons-material/CheckBox"
 
-import { createPost, updatePost } from "../../redux/actions/posts"
+import * as api from "../../api/index"
 
 import useStyles from "./styles"
 
@@ -42,11 +44,30 @@ const Form = ({ currentId, setCurrentId }) => {
     tags: [],
     selectedFile: "",
   })
-  const post = useSelector((state) =>
-    currentId ? state.posts.posts.find((p) => p._id === currentId) : null
-  )
-  const user = JSON.parse(localStorage.getItem("profile"))
-  const dispatch = useDispatch()
+  const { user } = useAuth()
+  const queryClient = useQueryClient()
+  const posts = queryClient.getQueryData(["posts", { page: 1 }])
+  const post = posts?.posts.find((el) => el._id === currentId)
+
+  const createPostMutation = useMutation({
+    mutationFn: api.createPost,
+    onSuccess: (data) => {
+      const id = data.data._id
+      queryClient.setQueryData(["posts", id], data.data)
+      queryClient.invalidateQueries(["posts"])
+      navigate(`/posts/${id}`)
+    },
+  })
+
+  const updatePostMutation = useMutation({
+    mutationFn: api.updatePost,
+    onSuccess: (data) => {
+      const id = data.data._id
+      queryClient.setQueryData(["posts", id], data.data)
+      queryClient.invalidateQueries(["posts"])
+      navigate(`/posts/${id}`)
+    },
+  })
   const navigate = useNavigate()
 
   const clear = () => {
@@ -57,9 +78,13 @@ const Form = ({ currentId, setCurrentId }) => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (currentId) {
-      dispatch(updatePost(currentId, { ...postData, name: user?.result?.name }))
+      updatePostMutation.mutate({
+        ...postData,
+        name: user?.result?.name,
+        currentId,
+      })
     } else {
-      dispatch(createPost({ ...postData, name: user?.result?.name }, navigate))
+      createPostMutation.mutate({ ...postData, name: user?.result?.name })
     }
     clear()
   }

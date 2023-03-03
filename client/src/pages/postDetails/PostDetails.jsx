@@ -1,29 +1,50 @@
-import React, { useEffect } from "react"
-import { Paper, Typography, CircularProgress, Divider } from "@mui/material"
-import { useDispatch, useSelector } from "react-redux"
 import moment from "moment"
 import { useParams, useNavigate } from "react-router-dom"
+import { useQuery } from "@tanstack/react-query"
 
-import { getPost, getPostsBySearchAndTags } from "../../redux/actions/posts"
-import useStyles from "./styles"
+import { Paper, Typography, CircularProgress, Divider } from "@mui/material"
 import CommentSection from "./CommentSection"
 
+import * as api from "../../api/index"
+
+import useStyles from "./styles"
+
 const PostDetails = () => {
-  const { post, posts, loading } = useSelector((state) => state.posts)
-  const dispatch = useDispatch()
   const navigate = useNavigate()
   const classes = useStyles()
   const { id } = useParams()
 
-  useEffect(() => {
-    dispatch(getPost(id))
-  }, [id, dispatch])
+  const {
+    isLoading: loadingPost,
+    data: dataPost,
+    error: errorPost,
+  } = useQuery({
+    queryKey: ["posts", id],
+    queryFn: async () => {
+      const { data } = await api.fetchPost(id)
+      return data
+    },
+  })
 
-  if (!post) return null
+  const {
+    isLoading: loadingRecommendedPosts,
+    data: dataRecommendedPosts,
+    error: errorRecommendedPosts,
+  } = useQuery({
+    queryKey: ["posts", id, "recommendedPosts"],
+    queryFn: async () => {
+      const { data } = await api.fetchPostsBySearch({
+        search: "",
+        tags: dataPost?.tags?.join(","),
+      })
+      return data
+    },
+    enabled: Boolean(dataPost),
+  })
 
   const openPost = (_id) => navigate(`/posts/${_id}`)
 
-  if (loading) {
+  if (loadingPost) {
     return (
       <Paper elevation={6} className={classes.loadingPaper}>
         <CircularProgress size="7em" />
@@ -31,20 +52,12 @@ const PostDetails = () => {
     )
   }
 
-  console.log({ loading, post, posts })
-
-  const recommendedPosts = posts.filter(
-    (el) =>
-      el._id !== post._id &&
-      el.tags.find((tag) => post.tags.find((postTag) => postTag === tag))
-  )
-
   return (
     <Paper style={{ padding: "20px", borderRadius: "15px" }} elevation={6}>
       <div className={classes.card}>
         <div className={classes.section}>
           <Typography variant="h3" component="h2">
-            {post.title}
+            {dataPost.title}
           </Typography>
           <Typography
             gutterBottom
@@ -52,39 +65,40 @@ const PostDetails = () => {
             color="textSecondary"
             component="h2"
           >
-            {post.tags.map((tag) => `#${tag} `)}
+            {dataPost.tags.map((tag) => `#${tag} `)}
           </Typography>
           <Typography gutterBottom variant="body1" component="p">
-            {post.message}
+            {dataPost.message}
           </Typography>
-          <Typography variant="h6">Created by: {post.name}</Typography>
+          <Typography variant="h6">Created by: {dataPost.name}</Typography>
           <Typography variant="body1">
-            {moment(post.createdAt).fromNow()}
+            {moment(dataPost.createdAt).fromNow()}
           </Typography>
           <Divider style={{ margin: "20px 0" }} />
-          <CommentSection post={post} />
+          <CommentSection post={dataPost} />
           <Divider style={{ margin: "20px 0" }} />
         </div>
         <div className={classes.imageSection}>
           <img
             className={classes.media}
             src={
-              post.selectedFile ||
+              dataPost.selectedFile ||
               "https://user-images.githubusercontent.com/194400/49531010-48dad180-f8b1-11e8-8d89-1e61320e1d82.png"
             }
-            alt={post.title}
+            alt={dataPost.title}
           />
         </div>
       </div>
-      {!!recommendedPosts.length && (
-        <div className={classes.section}>
-          <Typography gutterBottom variant="h5">
-            You might also like:
-          </Typography>
-          <Divider />
+      <div className={classes.section}>
+        <Typography gutterBottom variant="h5">
+          You might also like:
+        </Typography>
+        <Divider />
+        {!loadingRecommendedPosts ? (
           <div className={classes.recommendedPosts}>
-            {recommendedPosts.map(
-              ({ title, name, message, likes, selectedFile, _id }) => (
+            {dataRecommendedPosts.posts
+              .filter((el) => el._id !== dataPost._id)
+              .map(({ title, name, message, likes, selectedFile, _id }) => (
                 <div
                   style={{ margin: "20px", cursor: "pointer" }}
                   onClick={() => openPost(_id)}
@@ -104,11 +118,12 @@ const PostDetails = () => {
                   </Typography>
                   <img src={selectedFile} width="200px" alt={title} />
                 </div>
-              )
-            )}
+              ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <CircularProgress color="secondary" />
+        )}
+      </div>
     </Paper>
   )
 }

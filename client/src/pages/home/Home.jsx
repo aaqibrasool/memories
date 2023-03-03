@@ -1,6 +1,6 @@
-import React, { useState } from "react"
-import { useDispatch } from "react-redux"
+import { useState } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
+import { useQuery } from "@tanstack/react-query"
 
 import {
   Container,
@@ -12,42 +12,64 @@ import {
   Paper,
   Chip,
   Autocomplete,
+  CircularProgress,
 } from "@mui/material"
-import Posts from "../../components/posts/Posts"
-import Form from "../../components/form/Form"
-import Pagination from "../../components/pagination/Pagination"
+import { Form, Pagination, Post } from "../../components"
 
-import { getPostsBySearchAndTags } from "../../redux/actions/posts"
+import * as api from "../../api/index"
 
 import useStyles from "./styles"
 
-function useQuery() {
+function useQueryA() {
   return new URLSearchParams(useLocation().search)
 }
 
 const Home = () => {
   const [currentId, setCurrentId] = useState(0)
-  const dispatch = useDispatch()
   const classes = useStyles()
-  const query = useQuery()
-  const page = query.get("page") || 1
+  const query = useQueryA()
+  const page = Number(query.get("page")) || 1
   const searchQuery = query.get("searchQuery")
+  const tagsQuery = query.get("tags")
   const [search, setSearch] = useState("")
   const [tags, setTags] = useState([])
   const navigate = useNavigate()
 
+  const enableSearchQuery = searchQuery || tagsQuery
+
+  const allPostsQuery = useQuery({
+    queryKey: ["posts", { page }],
+    queryFn: async () => {
+      const { data } = await api.fetchPosts(page)
+      return data
+    },
+    enabled: Boolean(!enableSearchQuery),
+  })
+
+  const searchPostsQuery = useQuery({
+    queryKey: ["posts", { searchQuery, tagsQuery }],
+    queryFn: async () => {
+      const { data } = await api.fetchPostsBySearch({
+        search: searchQuery,
+        tags: tagsQuery,
+      })
+      return data
+    },
+    enabled: Boolean(enableSearchQuery),
+  })
+
+  const data = enableSearchQuery ? searchPostsQuery.data : allPostsQuery.data
+  const isLoading = enableSearchQuery
+    ? searchPostsQuery.isLoading
+    : allPostsQuery.isLoading
+
   const searchPost = () => {
     if (search.trim() || tags.length) {
-      //console.log(`/posts/search?searchQuery=${search || 'none'}&tags=${tags.join(',')}`)
-      dispatch(getPostsBySearchAndTags({ search, tags: tags.join(",") }))
-      navigate(
-        `/posts/search?searchQuery=${search || "none"}&tags=${tags.join(",")}`
-      )
+      navigate(`/posts/search?searchQuery=${search}&tags=${tags.join(",")}`)
     } else {
       navigate("/")
     }
   }
-  console.log(tags)
 
   const handleKeyPress = (e) => {
     if (e.keyCode === 13) {
@@ -66,7 +88,22 @@ const Home = () => {
           className={classes.gridContainer}
         >
           <Grid item xs={12} sm={6} md={9}>
-            <Posts setCurrentId={setCurrentId} />
+            {isLoading ? (
+              <CircularProgress color="secondary" />
+            ) : (
+              <Grid
+                className={classes.container}
+                container
+                alignItems="stretch"
+                spacing={3}
+              >
+                {data.posts.map((post) => (
+                  <Grid key={post._id} item xs={12} sm={12} md={6} lg={3}>
+                    <Post post={post} setCurrentId={setCurrentId} page={page} />
+                  </Grid>
+                ))}
+              </Grid>
+            )}
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <AppBar
@@ -124,9 +161,9 @@ const Home = () => {
               </Button>
             </AppBar>
             <Form currentId={currentId} setCurrentId={setCurrentId} />
-            {!searchQuery && !tags.length && (
+            {!searchQuery && !tagsQuery && (
               <Paper className={classes.pagination} elevation={6}>
-                <Pagination page={page} />
+                <Pagination page={page} totalPages={data?.totalPages || 1} />
               </Paper>
             )}
           </Grid>

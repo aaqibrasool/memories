@@ -1,4 +1,8 @@
-import React, { useState } from "react"
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+
+import { useAuth } from "../../context/auth.jsx"
+
 import {
   Avatar,
   Button,
@@ -8,12 +12,9 @@ import {
   Container,
 } from "@mui/material"
 import LockOutlinedIcon from "@mui/icons-material/LockOutLined"
-import { useDispatch } from "react-redux"
-import useStyles from "./styles.js"
 import Input from "./Input"
-import Icon from "./icon"
-import { useNavigate } from "react-router-dom"
-import { signin, signup } from "../../redux/actions/auth"
+
+import useStyles from "./styles.js"
 
 const initialState = {
   firstName: "",
@@ -22,22 +23,19 @@ const initialState = {
   password: "",
   confirmPassword: "",
 }
+
 const Auth = () => {
   const [formData, setFormData] = useState(initialState)
   const [showPassword, setShowPassword] = useState(false)
-  const classes = useStyles()
   const [isSignup, setIsSignup] = useState(false)
-  const dispatch = useDispatch()
   const navigate = useNavigate()
+  const classes = useStyles()
+  const { signIn, signUp } = useAuth()
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (isSignup) {
-      dispatch(signup(formData, navigate))
-    } else {
-      console.log(formData)
-      dispatch(signin(formData, navigate))
-    }
+    if (isSignup) signUp(formData)
+    if (!isSignup) signIn(formData)
   }
 
   const handleChange = (e) => {
@@ -123,25 +121,7 @@ const Auth = () => {
           >
             {isSignup ? "Sign Up" : "Sign In"}
           </Button>
-          {/* <GoogleLogin
-            clientId="278840412642-is1icqrjeu202f09910fas19hben2jei.apps.googleusercontent.com"
-            onSuccess={googleSuccess}
-            onFailure={googleFailure}
-            cookiePolicy="single_host_origin"
-            render={(renderProps) => (
-              <Button
-                className={classes.googleButton}
-                color="primary"
-                fullWidth
-                onClick={renderProps.onClick}
-                disabled={renderProps.disabled}
-                startIcon={<Icon />}
-                variant="contained"
-              >
-                Google Sign In
-              </Button>
-            )}
-          /> */}
+
           <Grid container justify="flex-end">
             <Grid item>
               <Button onClick={switchMode}>

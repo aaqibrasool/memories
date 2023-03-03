@@ -1,31 +1,44 @@
-import React, { useState, useRef } from "react"
+import { useState, useRef } from "react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+
 import { Typography, TextField, Button, Card } from "@mui/material"
 import DeleteIcon from "@mui/icons-material/Delete"
-import { useDispatch } from "react-redux"
 
-import { commentPost, deleteComment } from "../../redux/actions/posts"
+import * as api from "../../api/index"
+
 import useStyles from "./styles"
 
 const CommentSection = ({ post }) => {
   const user = JSON.parse(localStorage.getItem("profile"))
   const [comment, setComment] = useState("")
-  const dispatch = useDispatch()
-  const [comments, setComments] = useState(post?.comments)
   const classes = useStyles()
   const commentsRef = useRef()
-  const handleComment = async () => {
-    const newComments = await dispatch(
-      commentPost(`${user?.result?.name}: ${comment}`, post._id)
-    )
-    setComment("")
-    setComments(newComments)
+  const queryClient = useQueryClient()
 
-    commentsRef?.current?.scrollIntoView({ behavior: "smooth" })
-  }
-  const handleDeleteComment = async (postId, commentId) => {
-    const newComments = await dispatch(deleteComment(postId, commentId))
-    setComments(newComments)
-  }
+  const addCommentMutation = useMutation({
+    mutationFn: api.comment,
+    onSuccess: ({ data }) => {
+      queryClient.setQueryData(["posts", post._id], data)
+      setComment("")
+      commentsRef?.current?.scrollIntoView({ behavior: "smooth" })
+    },
+  })
+
+  const deleteCommentMutation = useMutation({
+    mutationFn: api.deleteComment,
+    onSuccess: ({ data }) => {
+      queryClient.setQueryData(["posts", post._id], data)
+    },
+  })
+
+  const handleComment = async () =>
+    addCommentMutation.mutate({
+      comment: `${user?.result?.name}: ${comment}`,
+      id: post._id,
+    })
+
+  const handleDeleteComment = async (postId, commentId) =>
+    deleteCommentMutation.mutate({ postId, commentId })
 
   return (
     <div>
@@ -34,8 +47,8 @@ const CommentSection = ({ post }) => {
           <Typography gutterBottom variant="h6">
             Comments
           </Typography>
-          {comments.length > 0 &&
-            comments?.map((el) => (
+          {post.comments.length > 0 &&
+            post.comments?.map((el) => (
               <Card elevation={2} key={el?._id} className={classes.cardComment}>
                 <Typography gutterBottom variant="subtitle1">
                   <strong>{el?.comment?.split(":")[0]}:</strong>

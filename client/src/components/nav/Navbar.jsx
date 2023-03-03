@@ -1,23 +1,17 @@
-import { Link, useNavigate } from "react-router-dom"
-import { useDispatch, useSelector } from "react-redux"
+import { Link } from "react-router-dom"
+
+import { useAuth } from "../../context/auth"
 
 import { AppBar, Typography, Toolbar, Avatar, Button } from "@mui/material"
 
 import memoriesLogo from "../../images/memoriesLogo.png"
 import memoriesText from "../../images/memoriesText.png"
+
 import useStyles from "./styles"
 
 const Navbar = () => {
-  const user = useSelector((state) => state.authReducer.authData)
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
+  const { signOut, user } = useAuth()
   const classes = useStyles()
-
-  const logout = () => {
-    dispatch({ type: "LOGOUT" })
-    setUser(null)
-    navigate("/")
-  }
 
   return (
     <AppBar className={classes.appBar} position="static" color="inherit">
@@ -53,7 +47,7 @@ const Navbar = () => {
               variant="contained"
               className={classes.logout}
               color="secondary"
-              onClick={logout}
+              onClick={signOut}
             >
               Logout
             </Button>

@@ -1,4 +1,9 @@
-import { useDispatch, useSelector } from "react-redux"
+import moment from "moment"
+import { useNavigate } from "react-router-dom"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+
+import { useAuth } from "../../context/auth"
+
 import {
   Card,
   CardActions,
@@ -12,17 +17,43 @@ import ThumbUpAltIcon from "@mui/icons-material/ThumbUpAlt"
 import DeleteIcon from "@mui/icons-material/Delete"
 import ThumbUpAltOutlined from "@mui/icons-material/ThumbUpAltOutlined"
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz"
-import moment from "moment"
-import useStyles from "./styles"
-import { deletePost, likePost } from "../../../redux/actions/posts"
-import { useNavigate } from "react-router-dom"
 
-const Post = ({ post, setCurrentId }) => {
+import * as api from "../../api/index"
+
+import useStyles from "./styles"
+
+const Post = ({ post, setCurrentId, page }) => {
   const classes = useStyles()
-  const dispatch = useDispatch()
-  const user = useSelector((state) => state.authReducer.authData)
+  const { user } = useAuth()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const isUserPost = user?.result?._id === post.creator
+
+  const likePostMutation = useMutation({
+    mutationFn: api.likePost,
+    onSuccess: ({ data }) => {
+      queryClient.setQueryData(["posts", { page }], (oldData) => ({
+        ...oldData,
+        posts: [
+          ...oldData.posts.map((el) =>
+            el._id === data._id ? { ...data } : el
+          ),
+        ],
+      }))
+      queryClient.invalidateQueries(["posts"])
+    },
+  })
+
+  const deletePostMutation = useMutation({
+    mutationFn: api.deletePost,
+    onSuccess: () => {
+      queryClient.setQueryData(["posts", { page }], (oldData) => ({
+        ...oldData,
+        posts: oldData.posts.filter((el) => el._id !== post._id),
+      }))
+      queryClient.invalidateQueries(["posts"])
+    },
+  })
 
   const openPost = () => {
     navigate(`/posts/${post._id}`)
@@ -108,7 +139,7 @@ const Post = ({ post, setCurrentId }) => {
           size="small"
           color="primary"
           disabled={!user?.result}
-          onClick={() => dispatch(likePost(post._id))}
+          onClick={() => likePostMutation.mutate(post._id)}
         >
           <Likes />
         </Button>
@@ -116,7 +147,7 @@ const Post = ({ post, setCurrentId }) => {
           <Button
             size="small"
             color="primary"
-            onClick={() => dispatch(deletePost(post._id))}
+            onClick={() => deletePostMutation.mutate(post._id)}
           >
             <DeleteIcon fontSize="small" /> Delete
           </Button>

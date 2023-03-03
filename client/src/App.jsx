@@ -1,27 +1,20 @@
-import { useEffect } from "react"
-import { useSelector, useDispatch } from "react-redux"
 import { Routes, Route, Navigate } from "react-router-dom"
+
+import { useAuth } from "./context/auth"
 
 import Home from "./pages/home/Home"
 import Auth from "./pages/auth/Auth"
 import PostDetails from "./pages/postDetails/PostDetails"
 
 import { Container } from "@mui/material"
-import Navbar from "./components/nav/Navbar"
-
-import { checkUserAuthStatus } from "./redux/actions/auth"
+import { Navbar } from "./components"
 
 import { ThemeProvider } from "@mui/styles"
 import { createTheme } from "@mui/material/styles"
 
 const App = () => {
-  const user = useSelector((state) => state.authReducer.authData)
-  const dispatch = useDispatch()
+  const { user } = useAuth()
   let theme = createTheme()
-
-  useEffect(() => {
-    dispatch(checkUserAuthStatus())
-  }, [])
 
   return (
     <ThemeProvider theme={theme}>
